@@ -1,7 +1,8 @@
 import { Module, DynamicModule, FactoryProvider, Type } from '@nestjs/common';
 import { IMonkManager, ICollection } from 'monk';
-import { MONK_MANAGER_TOKEN, MONK_DATABASE_TOKEN, MONK_OPTIONS_TOKEN, createMonkCollectionToken } from './tokens';
+import { MONK_MANAGER_TOKEN, MONK_DATABASE_TOKEN, MONK_OPTIONS_TOKEN, createMonkCollectionToken, createMonkRepositoryToken } from './tokens';
 import { MonkOptions, AsyncProvider, ImportableFactoryProvider } from './types';
+import { Repository } from './repository.service';
 
 export interface FeatureOptions<T> {
   type: Type<T>;
@@ -106,6 +107,10 @@ export class MonkModule {
       module.providers.push(cp);
     });
 
+    this.createCollectionProviders(moduleOptions?.collections).forEach(cp => {
+      module.providers.push(cp);
+    });
+
     return module;
   }
 
@@ -124,8 +129,34 @@ export class MonkModule {
       module.exports.push(cp.provide);
     });
 
+    this.createRepositoryProviders(collections).forEach(cp => {
+      module.providers.push(cp);
+      module.exports.push(cp.provide);
+    });
+
     return module;
   }
+
+  private static createRepositoryProviders = (
+    collections?: Array<FeatureTypeOrOptions<any>>,
+  ): FactoryProvider<ICollection<any>>[] => {
+    return (collections ?? []).map(f => {
+      const fOptions = f as FeatureOptions<any>;
+      const fType = fOptions.type ?? f as Type<any>;
+
+      return {
+        provide: createMonkRepositoryToken(fType),
+        useFactory: (
+          collection: ICollection<any>,
+        ) => {
+          return new Repository(collection) as any;
+        },
+        inject: [
+          createMonkCollectionToken(fType),
+        ],
+      };
+    });
+  };
 
   private static createCollectionProviders = (
     collections?: Array<FeatureTypeOrOptions<any>>,

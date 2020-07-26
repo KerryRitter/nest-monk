@@ -1,10 +1,8 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { MonkModule, MONK_MANAGER_TOKEN } from '../src';
 import { Module, Injectable, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ICollection } from 'monk';
-import { InjectCollection } from '../src/lib/collection.decorator';
-import { Injector } from '@nestjs/core/injector/injector';
+import { MonkModule, MONK_MANAGER_TOKEN, InjectCollection, InjectRepository } from '../src';
 
 @Injectable()
 class MongoServer {
@@ -79,7 +77,7 @@ class Todo {
 @Injectable()
 class TodoService {
   constructor(
-    @InjectCollection(Todo) readonly todosCollection: ICollection<Todo>,
+    @InjectRepository(Todo) readonly todosCollection: ICollection<Todo>,
   ) {
   }
 

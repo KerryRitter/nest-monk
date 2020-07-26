@@ -7,3 +7,7 @@ export const MONK_OPTIONS_TOKEN = 'MONK_OPTIONS';
 export function createMonkCollectionToken(type: Type<any>) {
   return `COLLECTION_${type.name}`.toLocaleUpperCase();
 }
+
+export function createMonkRepositoryToken(type: Type<any>) {
+  return `REPOSITORY_${type.name}`.toLocaleUpperCase();
+}
