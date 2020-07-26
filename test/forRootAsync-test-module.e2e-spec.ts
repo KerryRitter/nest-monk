@@ -3,6 +3,8 @@ import { MonkModule, MONK_MANAGER_TOKEN } from '../src';
 import { Module, Injectable, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ICollection } from 'monk';
+import { InjectCollection } from '../src/lib/collection.decorator';
+import { Injector } from '@nestjs/core/injector/injector';
 
 @Injectable()
 class MongoServer {
@@ -27,6 +29,7 @@ class MongoServer {
 })
 class MongoServerModule {}
 
+/* USERS */
 class User {
   id: string;
   name: string;
@@ -35,7 +38,7 @@ class User {
 @Injectable()
 class UserService {
   constructor(
-    @Inject('COLLECTION_USERS') readonly usersCollection: ICollection<User>,
+    @InjectCollection(User) readonly usersCollection: ICollection<User>,
   ) {
   }
 
@@ -50,13 +53,55 @@ class UserService {
 
 @Module({
   imports: [
-    MonkModule.forFeatures(['users']),
+    MonkModule.forFeatures([
+      {
+        type: User,
+        collectionOptions: collection => {
+          
+        },
+      }
+    ]),
   ],
   providers: [UserService],
   exports: [UserService],
 })
 class UserModule {
 } 
+/* END USERS */
+
+/* TODOS */
+class Todo {
+  id: string;
+  title: string;
+  complete: boolean;
+}
+
+@Injectable()
+class TodoService {
+  constructor(
+    @InjectCollection(Todo) readonly todosCollection: ICollection<Todo>,
+  ) {
+  }
+
+  async get(id: string) {
+    await this.todosCollection.findOne(id);
+  }
+
+  async save(user: User) {
+    return await this.todosCollection.insert(user);
+  }
+}
+
+@Module({
+  imports: [
+    MonkModule.forFeatures([Todo]),
+  ],
+  providers: [TodoService],
+  exports: [TodoService],
+})
+class TodoModule {
+} 
+/* END USERS */
 
 @Module({
   imports: [
@@ -71,8 +116,9 @@ class UserModule {
         imports: [MongoServerModule],
       },
     }),
+    TodoModule,
     UserModule,
-  ]
+  ],
 })
 class AppRootModule {}
 
@@ -88,7 +134,8 @@ describe('MonkModule forRootAsync', () => {
 
     const manager = module.get(MONK_MANAGER_TOKEN);
     const userService = module.get(UserService);
-    console.log({manager, userService});
+    const todoService = module.get(TodoService);
+    console.log({manager, userService, todoService});
 
     await module.get(MongoServer).stopServer();
     expect(module).toBeDefined();

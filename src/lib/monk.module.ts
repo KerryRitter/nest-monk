@@ -1,12 +1,14 @@
-import { Module, DynamicModule, FactoryProvider } from '@nestjs/common';
-import monk, { IMonkManager, ICollection } from 'monk';
+import { Module, DynamicModule, FactoryProvider, Type } from '@nestjs/common';
+import { IMonkManager, ICollection } from 'monk';
 import { MONK_MANAGER_TOKEN, MONK_DATABASE_TOKEN, MONK_OPTIONS_TOKEN, createMonkCollectionToken } from './tokens';
 import { MonkOptions, AsyncProvider, ImportableFactoryProvider } from './types';
 
-export interface CollectionProviderOptions<T> {
-  collectionName: string;
+export interface FeatureOptions<T> {
+  type: Type<T>;
   collectionOptions?: (collection: ICollection<T>) => void;
 }
+
+export type FeatureTypeOrOptions<T> = Type<T> | FeatureOptions<T>;
 
 export class FakeMonk {
   constructor(
@@ -27,7 +29,7 @@ export class FakeCollection {
 export class MonkModule {
   static forRoot(moduleOptions: {
     database: string | Array<string>,
-    collections?: Array<string | CollectionProviderOptions<any>>,
+    collections?: Array<FeatureTypeOrOptions<any>>,
     options?: MonkOptions,
   }): DynamicModule {
     return this.forRootAsync({
@@ -45,7 +47,7 @@ export class MonkModule {
 
   static forRootAsync(moduleOptions: {
     database: AsyncProvider<string | Array<string> | Promise<string> | Promise<Array<string>>>,
-    collections?: Array<string | CollectionProviderOptions<any>>,
+    collections?: Array<FeatureTypeOrOptions<any>>,
     options?: AsyncProvider<MonkOptions>,
   }): DynamicModule {
     const module: DynamicModule = {
@@ -108,7 +110,7 @@ export class MonkModule {
   }
 
   static forFeatures(
-    collections?: Array<string | CollectionProviderOptions<any>>,
+    collections?: Array<FeatureTypeOrOptions<any>>,
   ): DynamicModule {
     const module: DynamicModule = {
       module: MonkModule,
@@ -126,11 +128,14 @@ export class MonkModule {
   }
 
   private static createCollectionProviders = (
-    collections?: Array<string | CollectionProviderOptions<any>>,
+    collections?: Array<FeatureTypeOrOptions<any>>,
   ): FactoryProvider<ICollection<any>>[] => {
-    const createCollectionProvider = <T>(options: CollectionProviderOptions<T>): FactoryProvider<ICollection<T>> => {
+    return (collections ?? []).map(f => {
+      const fOptions = f as FeatureOptions<any>;
+      const fType = fOptions.type ?? f as Type<any>;
+
       return {
-        provide: createMonkCollectionToken(options.collectionName),
+        provide: createMonkCollectionToken(fType),
         useFactory: (
           monkManager: IMonkManager
         ) => {
@@ -139,19 +144,12 @@ export class MonkModule {
           //   options.collectionOptions(collection);
           // }
           // return collection;
-          return new FakeCollection(null) as any;
+          return new FakeCollection(fType) as any;
         },
         inject: [
           MONK_MANAGER_TOKEN,
         ],
       };
-    };
-
-    return (collections ?? []).map(collection => {
-      return createCollectionProvider(
-        typeof collection === 'string'
-        ? { collectionName: collection }
-        : collection);
     });
   };
 }

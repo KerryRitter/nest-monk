@@ -61,7 +61,6 @@ describe('MonkModule forRootAsync', () => {
     );
 
     const manager = module.get(MONK_MANAGER_TOKEN);
-    console.log({manager});
 
     expect(module).toBeDefined();
     expect(manager).toBeDefined();
