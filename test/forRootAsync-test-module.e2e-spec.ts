@@ -2,7 +2,7 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 import { Module, Injectable, Inject } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ICollection } from 'monk';
-import { MonkModule, MONK_MANAGER_TOKEN, InjectCollection, InjectRepository } from '../src';
+import { MonkModule, MONK_MANAGER_TOKEN, InjectCollection, InjectRepository, Entity } from '../src';
 
 @Injectable()
 class MongoServer {
@@ -28,6 +28,7 @@ class MongoServer {
 class MongoServerModule {}
 
 /* USERS */
+@Entity({})
 class User {
   id: string;
   name: string;
@@ -133,7 +134,7 @@ describe('MonkModule forRootAsync', () => {
     const manager = module.get(MONK_MANAGER_TOKEN);
     const userService = module.get(UserService);
     const todoService = module.get(TodoService);
-    console.log({manager, userService, todoService});
+    console.log({manager, userService, todoService, 'User': User });
 
     await module.get(MongoServer).stopServer();
     expect(module).toBeDefined();
