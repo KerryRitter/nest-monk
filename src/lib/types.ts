@@ -1,4 +1,13 @@
-import { DynamicModule, ValueProvider, FactoryProvider } from '@nestjs/common';
+import { DynamicModule, ValueProvider, FactoryProvider, Type } from '@nestjs/common';
+import { ICollection } from 'monk';
+
+export interface MonkEntityOptions<T> {
+  collectionOptions?: (collection: ICollection<T>) => void;
+}
+
+export interface EntityType<T> extends Function, MonkEntityOptions<T> {
+  new (...args: any[]): T;
+}
 
 export interface ImportableFactoryProvider<T>
   extends Omit<FactoryProvider<T>, 'provide'>, Pick<DynamicModule, 'imports'> {

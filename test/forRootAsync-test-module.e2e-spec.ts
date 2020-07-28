@@ -28,9 +28,9 @@ class MongoServer {
 class MongoServerModule {}
 
 /* USERS */
-@Entity({})
+@Entity()
 class User {
-  id: string;
+  _id: string;
   name: string;
 }
 
@@ -52,14 +52,7 @@ class UserService {
 
 @Module({
   imports: [
-    MonkModule.forFeatures([
-      {
-        type: User,
-        collectionOptions: collection => {
-          
-        },
-      }
-    ]),
+    MonkModule.forFeatures([User]),
   ],
   providers: [UserService],
   exports: [UserService],
@@ -69,8 +62,11 @@ class UserModule {
 /* END USERS */
 
 /* TODOS */
+@Entity<Todo>({
+  collectionOptions: coll => coll.createIndex('_id'),
+})
 class Todo {
-  id: string;
+  _id: string;
   title: string;
   complete: boolean;
 }
@@ -80,14 +76,6 @@ class TodoService {
   constructor(
     @InjectRepository(Todo) readonly todosCollection: ICollection<Todo>,
   ) {
-  }
-
-  async get(id: string) {
-    await this.todosCollection.findOne(id);
-  }
-
-  async save(user: User) {
-    return await this.todosCollection.insert(user);
   }
 }
 
@@ -100,7 +88,7 @@ class TodoService {
 })
 class TodoModule {
 } 
-/* END USERS */
+/* END TODOS */
 
 @Module({
   imports: [
@@ -124,11 +112,10 @@ class AppRootModule {}
 describe('MonkModule forRootAsync', () => {
   it('', async () => {
     jest.setTimeout(1000000);
+
     const module = await NestFactory.createApplicationContext(
       AppRootModule,
-      {
-        logger: false,
-      },
+      { logger: false },
     );
 
     const manager = module.get(MONK_MANAGER_TOKEN);
