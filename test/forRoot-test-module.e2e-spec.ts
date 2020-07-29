@@ -1,5 +1,5 @@
 import { MongoMemoryServer } from 'mongodb-memory-server';
-import { Module, Injectable } from '@nestjs/common';
+import { Module, Injectable, Controller, Get } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { ICollection } from 'monk';
 import {
@@ -9,29 +9,6 @@ import {
   Model,
   Repository,
 } from '../src';
-
-@Injectable()
-class MongoServer {
-  private server: MongoMemoryServer;
-
-  async startServer() {
-    this.server = new MongoMemoryServer();
-
-    await this.server.start();
-
-    return this.server;
-  }
-
-  async stopServer() {
-    await this.server.stop();
-  }
-}
-
-@Module({
-  providers: [MongoServer],
-  exports: [MongoServer],
-})
-class MongoServerModule {}
 
 /* USERS */
 @Model()
@@ -48,32 +25,34 @@ class UserService {
   ) {}
 }
 
-@Module({
-  imports: [MonkModule.forFeatures([User])],
-  providers: [UserService],
-  exports: [UserService],
-})
-class UserModule {}
+@Controller()
+class UserController {
+  constructor(
+    @InjectRepository(User) readonly usersRepository: Repository<User>,
+  ) {}
+
+  @Get(':id')
+  async getById(id: string) {
+    return await this.usersRepository.getById(id);
+  }
+}
 /* END USERS */
 
 @Module({
   imports: [
-    MonkModule.forRootAsync({
-      database: {
-        useFactory: async (ms: MongoServer) => {
-          const server = await ms.startServer();
-          return await server.getConnectionString();
-        },
-        inject: [MongoServer],
-        imports: [MongoServerModule],
-      },
+    MonkModule.forRoot({
+      database: 'mongodb://127.0.0.1:27017',
+      options: {
+        ssl: true,
+      }
     }),
-    UserModule,
   ],
+  providers: [UserService],
+  exports: [UserService],
 })
 class AppRootModule {}
 
-describe('MonkModule forRootAsync', () => {
+describe('MonkModule forRoot', () => {
   it('', async () => {
     jest.setTimeout(15000);
 

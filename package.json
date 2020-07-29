@@ -105,5 +105,9 @@
   ],
   "files": [
     "dist"
-  ]
+  ],
+  "dependencies": {
+    "class-transformer": "^0.2.3",
+    "lodash.snakecase": "^4.1.1"
+  }
 }

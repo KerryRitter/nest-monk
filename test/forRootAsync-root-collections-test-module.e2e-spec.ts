@@ -34,7 +34,9 @@ class MongoServer {
 class MongoServerModule {}
 
 /* USERS */
-@Model()
+@Model({
+  collectionOptions: o => o.createIndex('name', { unique: true }),
+})
 class User {
   _id: string;
   name: string;
@@ -47,13 +49,6 @@ class UserService {
     @InjectRepository(User) readonly usersRepository: Repository<User>,
   ) {}
 }
-
-@Module({
-  imports: [MonkModule.forFeatures([User])],
-  providers: [UserService],
-  exports: [UserService],
-})
-class UserModule {}
 /* END USERS */
 
 @Module({
@@ -67,9 +62,11 @@ class UserModule {}
         inject: [MongoServer],
         imports: [MongoServerModule],
       },
+      collections: [User],
     }),
-    UserModule,
   ],
+  providers: [UserService],
+  exports: [UserService],
 })
 class AppRootModule {}
 
