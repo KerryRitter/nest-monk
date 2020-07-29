@@ -1,8 +1,4 @@
-import {
-  DynamicModule,
-  ValueProvider,
-  FactoryProvider,
-} from '@nestjs/common';
+import { DynamicModule, ValueProvider, FactoryProvider } from '@nestjs/common';
 import { ICollection } from 'monk';
 
 export interface ModelOptions<T> {
